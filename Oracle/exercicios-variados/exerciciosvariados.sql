@@ -119,6 +119,7 @@ ALTER TABLE PROFTURMA ADD CONSTRAINT  FK_PROFTURM_PROFTURMA_TURMA FOREIGN KEY (A
  * A. INSERIR REGISTROS PARA TODAS AS TABELAS RESPEITANDO AS INTEGRIDADES.
  */
  
+
  -- 1) Obter os códigos dos diferentes departamentos que tem turmas no ano-semestre 2002/1
 -- UPDATE DEPTO SET CODDEPTO = 'MT', NOMEDEPTO = 'Matemática e estatística' WHERE CODDEPTO = 'RH';
  -- INSERÇÕES NA TABELA DEPTO
@@ -141,7 +142,13 @@ ALTER TABLE PROFTURMA ADD CONSTRAINT  FK_PROFTURM_PROFTURMA_TURMA FOREIGN KEY (A
  INNER JOIN TURMA T
  ON (DI.CODDEPTO = T.CODDEPTO)
  WHERE ANOSEM = 20021;
- -- PROCEDURES
+ 
+ 
+ --CORREÇÃO
+ -- MOTIVO: O CÓDIGO ACIMA TRAZ O RESULTADO ESPERADO, MAS ELE É MUITO COMPLEXO, SE EXISTE OS DADOS QUE ESTAMOS PROCURANDO APENAS NA TABELA TURMA, ENTÃO NÃO PRECISAMOS FAZER NENHUM JOIN
+ SELECT CODDEPTO FROM TURMA  WHERE ANOSEM = 20021;
+ 
+  -- PROCEDURE  EXERCÍCIO 1
  
 EXECUTE INSERE_DEPTO ('AG', 'AGRO');
  CREATE OR REPLACE PROCEDURE INSERE_DEPTO (
@@ -166,5 +173,69 @@ INSERT INTO DEPTO (CODDEPTO, NOMEDEPTO) VALUES (vCONTADOR, TO_CHAR(vCONTADOR));
 END LOOP;
 END;
 
+-- CURSOR EXPLÍCITO DO EXERCÍCIO 1
 
+/*Antes de declarar o cursor, o dbms deve ser ativado no console, para isso, utilize o código "SET SERVEROUTPUT ON", 
+ você poderá, também, abrir o console do dbms em "exibir -> saída dbms -> clicar em no ícone de + para adicionar o console dbms para a conexão em que se está trabalhando, pronto"*/
+-- Há duas formas de executar o cursor, com begin e end com o nome do cursor no meio e a forma tradicional de execução de procedures com o execute
+--FORMA DE EXECUTAR 1
+BEGIN
+RETORNA_CODDEPTO_EXPLICITO();
+END;
+--FORMA DE EXECUTAR 2
+EXECUTE RETORNA_CODDEPTO_EXPLICITO;
+CREATE OR REPLACE PROCEDURE RETORNA_CODDEPTO_EXPLICITO
+  AS CURSOR  CCODTURMA 
+    IS SELECT CODDEPTO FROM TURMA WHERE ANOSEM = 20021; 
+    VCODDEPTO CHAR(5); -- O cursor coloca o resultado  do select nessa variável vCODDEPTO
+    BEGIN
+      OPEN CCODTURMA;
+        FETCH CCODTURMA INTO VCODDEPTO;
+        WHILE CCODTURMA%FOUND LOOP
+          DBMS_OUTPUT.PUT_LINE('Depto:' || VCODDEPTO);
+          FETCH CCODTURMA INTO VCODDEPTO;
+        END LOOP;
+      CLOSE CCODTURMA;
+END;
+
+
+-- CURSOR INPLÍCITO DO EXERCÍCIO 1
+-- Há duas formas de executar o cursor, com begin e end com o nome do cursor no meio e a forma tradicional de execução de procedures com o execute
+--FORMA DE EXECUTAR 1
+BEGIN
+RETORNA_CODDEPTO_IMPLICITO();
+END;
+--FORMA DE EXECUTAR 2
+EXECUTE RETORNA_CODDEPTO_IMPLICITO;
+  CREATE OR REPLACE PROCEDURE RETORNA_CODDEPTO_IMPLICITO
+  AS CURSOR  CCODTURMA 
+    IS SELECT CODDEPTO FROM TURMA WHERE ANOSEM = 20021;
+--    RCODTURMA CCODTURMA%ROWTYPE;
+    BEGIN
+    FOR VCODEPTO IN CCODTURMA LOOP
+      DBMS_OUTPUT.PUT_LINE('CODDEPTO: '  || VCODEPTO.CODDEPTO);
+    END LOOP;
+  END;
+ 
+-- 2. Obter os códigos dos professores que são do departamento de código 'INF01' e que ministraram ao menos uma turma em 2002/1.
+
+--INSERÇÕES NA TABELA DEPARTAMENTO
+INSERT INTO DEPTO (CODDEPTO, NOMEDEPTO) VALUES ('INF01', 'TECNOLOGIA');
+
+--Inserções na tabela de titulação
+INSERT INTO TITULACAO (CODTIT, NOMETIT) VALUES (1, 'Especialista em sistemas web'); 
+
+-- Inserções na tabela de professores
+INSERT INTO PROFESSOR (CODPROF, CODDEPTO, CODTIT, NOMEPROF) VALUES (1, 'INF01', 1, 'Rosana de Oliveira Silva'); 
+INSERT INTO PROFESSOR (CODPROF, CODDEPTO, CODTIT, NOMEPROF) VALUES (2, 'INF01',  1, 'Matheus Santos Silva'); 
+
+--Inserções na tabela de disciplina
+INSERT INTO DISCIPLINA (CODDEPTO, NUMDISC, NOMEDISC, CREDITODISC) VALUES ('INF01', 4, 'Java web', 7);
+
+--Inserções na tabela de turma
+INSERT INTO TURMA (ANOSEM, CODDEPTO, NUMDISC, SIGLATUR, CAPACTUR) VALUES (3, 'INF01', 4, 'IW', 40);
+
+--Inserções na tabela de Pprofturma
+INSERT INTO PROFTURMA (ANOSEM, CODDEPTO, NUMDISC, SIGLATUR, CODPROF) VALUES (3, 'INF01', 4, 'IW', 2 );
+SELECT * FROM TURMA
 
