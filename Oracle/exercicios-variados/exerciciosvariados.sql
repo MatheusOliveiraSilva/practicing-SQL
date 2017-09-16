@@ -199,7 +199,7 @@ CREATE OR REPLACE PROCEDURE RETORNA_CODDEPTO_EXPLICITO
 END;
 
 
--- CURSOR INPLÍCITO DO EXERCÍCIO 1
+-- CURSOR IMPLÍCITO DO EXERCÍCIO 1
 -- Há duas formas de executar o cursor, com begin e end com o nome do cursor no meio e a forma tradicional de execução de procedures com o execute
 --FORMA DE EXECUTAR 1
 BEGIN
@@ -220,7 +220,7 @@ EXECUTE RETORNA_CODDEPTO_IMPLICITO;
 -- 2. Obter os códigos dos professores que são do departamento de código 'INF01' e que ministraram ao menos uma turma em 2002/1.
 
 --INSERÇÕES NA TABELA DEPARTAMENTO
-INSERT INTO DEPTO (CODDEPTO, NOMEDEPTO) VALUES ('INF01', 'TECNOLOGIA');
+INSERT INTO DEPTO (CODDEPTO, NOMEDEPTO) VALUES ('INF01', 'INFORMATICA');
 
 --Inserções na tabela de titulação
 INSERT INTO TITULACAO (CODTIT, NOMETIT) VALUES (1, 'Especialista em sistemas web'); 
@@ -233,9 +233,61 @@ INSERT INTO PROFESSOR (CODPROF, CODDEPTO, CODTIT, NOMEPROF) VALUES (2, 'INF01', 
 INSERT INTO DISCIPLINA (CODDEPTO, NUMDISC, NOMEDISC, CREDITODISC) VALUES ('INF01', 4, 'Java web', 7);
 
 --Inserções na tabela de turma
-INSERT INTO TURMA (ANOSEM, CODDEPTO, NUMDISC, SIGLATUR, CAPACTUR) VALUES (3, 'INF01', 4, 'IW', 40);
+INSERT INTO TURMA (ANOSEM, CODDEPTO, NUMDISC, SIGLATUR, CAPACTUR) VALUES (20021, 'INF01', 4, 'IW', 40);
 
 --Inserções na tabela de Pprofturma
-INSERT INTO PROFTURMA (ANOSEM, CODDEPTO, NUMDISC, SIGLATUR, CODPROF) VALUES (3, 'INF01', 4, 'IW', 2 );
-SELECT * FROM TURMA
+INSERT INTO PROFTURMA (ANOSEM, CODDEPTO, NUMDISC, SIGLATUR, CODPROF) VALUES (20021, 'INF01', 4, 'IW', 2 );
 
+-- 3. Obter os horários de aula (dia da semana,hora inicial e número de horas ministradas) do professor "Antunes" em 20021.
+
+-- Insersão do professor Antunes
+INSERT INTO PROFESSOR (CODPROF, CODDEPTO, CODTIT, NOMEPROF) VALUES (3, 'INF01', 1, 'Antunes'); 
+
+-- Inserção na tabela de Predio
+INSERT INTO PREDIO (CODPRED, NOMEPRED) VALUES (1, 'Informática - aulas');
+  
+-- Inserção na tabela sala
+INSERT INTO SALA (CODPRED, NUMSALA, DESCRICAOSALA, CAPACSALA) VALUES (1, 101, 'Sala da aula de ASP NET', 40);
+
+-- Inserção de turma para o professor antunes
+INSERT INTO TURMA (ANOSEM, CODDEPTO, NUMDISC, SIGLATUR, CAPACTUR) VALUES (20021, 'INF01', 5, 'IW', 40);
+select * from horario
+-- Inserção na tabela horario
+INSERT INTO HORARIO (ANOSEM, CODDEPTO, NUMDISC, SIGLATUR,DIASEM,HORAINICIO,NUMSALA,CODPRED,NUMHORAS) VALUES (20021, 'INF01', 5, 'IW', 4, 19, 101, 1, 4);
+
+-- 6. Obter os identificadores das salas (código do prédio e número da sala) que, em 2002/1:
+-- - Nas segundas-feiras (dia da semana = 2), tiveram ao menos uma turma do departamento 'Informática', e
+-- - Nas quartas-feiras (dia da semana = 4), tiveram ao menos uma turma ministrada pelo professor denominado 'Antunes'.
+--SELECT * FROM DEPTO WHERE  CODDEPTO = 'INF01'
+
+--DELETE PROFTURMA WHERE ANOSEM = 3
+
+-- INSERÇÃO NA TABELA DE DISCIPLINA, CRIANDO UMA DISCIPLINA PARA O PROFESSOR ANTUNES
+INSERT INTO DISCIPLINA (CODDEPTO, NUMDISC, NOMEDISC, CREDITODISC) VALUES ('INF01', 5, 'ASP NET', 7);
+
+
+-- SELECT * FROM TURMA
+-- UPDATE TURMA SET ANOSEM = 20021 WHERE NUMDISC = 4
+
+-- CURSOR INPLÍCITO DO EXERCÍCIO 6 
+-- obs: resposta dada pelo professor
+CREATE OR REPLACE PROCEDURE proc1 AS
+  BEGIN
+    FOR X IN
+      (SELECT CODPRED, NUMSALA FROM HORARIO H INNER JOIN DEPTO D ON (H.CODDEPTO = D.CODDEPTO)
+        WHERE NOMEDEPTO = 'INFORMATICA'
+          AND DIASEM = 2
+          AND ANOSEM = 2002)
+        INTERSECT
+        SELECT  CODPRED, NUMSALA FROM HORARIO H INNER JOIN PROFTURMA PT ON (PT.ANOSEM = H.ANOSEM AND
+                                                                            PT.CODDEPTO = H.CODDEPTO AND
+                                                                            PT.NUMDISC = H. NUMDISC AND
+                                                                            PT.SIGLATUR = H.SIGLATUR)
+                  INNER JOIN PROFESSOR P ON (P.CODPROF = PT.CODPROF)
+                  WHERE NOMEPROF = 'Antunes' AND
+                  DIASEM = 4 AND
+                  H.ANOSEM = 20021)
+      LOOP
+      END LOOP;
+  END;
+  
